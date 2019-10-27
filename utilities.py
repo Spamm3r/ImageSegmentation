@@ -1,6 +1,5 @@
 from scipy.io import loadmat
 from scipy.cluster.vq import vq, kmeans
-import os
 from typing import Tuple
 import numpy as np
 from random import shuffle, randint
