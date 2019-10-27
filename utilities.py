@@ -1,4 +1,5 @@
 from scipy.io import loadmat
+from scipy.cluster.vq import vq, kmeans
 import os
 from typing import Tuple
 import numpy as np
@@ -8,6 +9,8 @@ from random import shuffle, randint
 class Utilities:
     def __init__(self):
         self.data, self.gt = self.mat_to_array()
+        print(self.data.shape)
+        # at this stage i have to create patches to get a region
 
     def mat_to_array(self):
         data_mat = loadmat('sets/SalinasA_corrected.mat')
@@ -20,6 +23,7 @@ class Utilities:
             data[:, :, i] = (data[:, :, i] - np.mean(data[:, :, i])) / np.std(data[:, :, i])
 
         return data, gt
+
 
 
 class WindowSize(object):
