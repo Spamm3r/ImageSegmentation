@@ -8,8 +8,11 @@ from random import shuffle, randint
 
 class Utilities:
     def __init__(self):
-        self.data, self.gt = self.mat_to_array()
-        print(self.data.shape)
+        self.data, self.gt = self.mat_to_array()  # (83, 86, 204) ;  (83, 86)
+        # for i in range(83):
+        #     for j in range(86):
+        #         self.gt[i][j] = self.gt[i][j] / 99
+        # v, k = kmeans(self.gt, 6)
         # at this stage i have to create patches to get a region
 
     def mat_to_array(self):
@@ -17,7 +20,7 @@ class Utilities:
         gt_mat = loadmat('sets/SalinasA_gt.mat')
 
         data = data_mat['salinasA_corrected'].astype(np.float32)
-        gt = gt_mat['salinasA_gt']
+        gt = gt_mat['salinasA_gt'].astype(np.float32)
 
         for i in range(data.shape[-1]):
             data[:, :, i] = (data[:, :, i] - np.mean(data[:, :, i])) / np.std(data[:, :, i])
