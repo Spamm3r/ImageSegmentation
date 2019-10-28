@@ -25,7 +25,7 @@ class Utilities:
         # print(cluster_centers)
         cluster_labels = kmeans_cluster.labels_
         # print(cluster_labels)
-
+        # test
         # plt.figure(figsize=(83, 86))
         # plt.imshow(cluster_centers[cluster_labels].reshape(x, y, z))
         # plt.show()
