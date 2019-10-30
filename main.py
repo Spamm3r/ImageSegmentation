@@ -1,4 +1,4 @@
 from utilities import Utilities
 
 if __name__ == '__main__':
-    util = Utilities()
+    util = Utilities(6)
