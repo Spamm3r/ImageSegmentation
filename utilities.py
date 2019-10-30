@@ -19,16 +19,18 @@ class Utilities:
         # plt.show()
         x, y, z = self.data_a.shape
         self.data_2d = self.data_a.reshape(x * y, z)
-        kmeans_cluster = cluster.KMeans(n_clusters=6)
-        kmeans_cluster.fit(self.data_2d)
-        cluster_centers = kmeans_cluster.cluster_centers_
-        # print(cluster_centers)
-        cluster_labels = kmeans_cluster.labels_
-        # print(cluster_labels)
+        #  kmeans_cluster = cluster.KMeans(n_clusters=6)
+        #  kmeans_cluster.fit(self.data_2d)
+        #  cluster_centers = kmeans_cluster.cluster_centers_
+        #  print(cluster_centers)
+        #  cluster_labels = kmeans_cluster.labels_
+        #  print(cluster_labels)
         
-        # plt.figure(figsize=(83, 86))
+        # lt.figure(figsize=(83, 86))
         # plt.imshow(cluster_centers[cluster_labels].reshape(x, y, z))
         # plt.show()
+        plt.imshow(self.gt) #  groundtruth
+        plt.show()
 
     def mat_to_array(self):
         data_mat = loadmat('sets/SalinasA_corrected.mat')
