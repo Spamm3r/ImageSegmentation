@@ -13,8 +13,8 @@ class Utilities:
     def __init__(self, n_classes):
         self.n_classes = n_classes
         self.data, self.gt, self.data_a = self.mat_to_array()  # (83, 86, 204) ;  (83, 86)
-        # kmeans = self.kmeans_for_each_pixel(self.data, self.n_classes)
-        self.fuzzy_c_means(self.data[81], self.n_classes)
+        kmeans = self.kmeans_for_each_pixel(self.data, self.n_classes)
+        # self.fuzzy_c_means(self.data[81], self.n_classes)
         # kmeans = self.kmeans_custom(self.data, self.n_classes, 11)
         # self.pca(kmeans[0])
         # pca = PCA()
@@ -23,7 +23,6 @@ class Utilities:
         # x_new = pca.transform(kmeans[0][13])
         # self.custom_plot(x_new[:, 0:2], pca.components_)
         # plt.show()
-
 
     def fuzzy_c_means(self, data, n_classes):
         fcm = FCM(n_clusters=n_classes)
@@ -82,7 +81,7 @@ class Utilities:
         gt = gt_mat['salinasA_gt'].astype(np.float32)
 
         for i in range(data.shape[-1]):
-            data[:, :, i] = (data[:, :, i] - np.mean(data[:, :, i])) / np.std(data[:, :, i])
+            data[:, :, i] = (data[:, :, i] - np.mean(data[:, :, i])) / np.std(data[:, :, i])  # Standard score of the x
 
 
         # for i in range(data_a.shape[-1]):
