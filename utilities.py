@@ -1,35 +1,78 @@
 from scipy.io import loadmat
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy import mean
 from sklearn import cluster, decomposition
-from mpl_toolkits.mplot3d import axes3d, Axes3D
+from spectral import *
 
 
 class Utilities:
     def __init__(self, n_classes):
         # preparing data
         self.n_classes = n_classes
-        self.data, self.gt, self.data_a = self.mat_to_array()  # (83, 86, 204) ;  (83, 86)
+        self.data_pavia_u = loadmat('sets/PaviaU.mat')
+        self.data_kennedy = loadmat('sets/KSC.mat')
+        self.data_salinas_a_corrected = loadmat('sets/SalinasA_corrected.mat')
+        self.data_salinas_a = loadmat('sets/SalinasA.mat')
+        self.data_pines = loadmat('sets/Indian_pines.mat')
+        self.data_pines_corrected = loadmat('sets/Indian_pines_corrected.mat')
+        self.data_salinas_a_gt = loadmat('sets/SalinasA_gt.mat')
+        self.mat_to_array()
 
-        # algorithms
-        self.pca_then_kmean(self.data, 24)
+        self.pca_then_kmean1(self.data_pines, 9)
 
-    def pca_then_kmean(self, data, components):
+    def pca_then_kmean(self, data, k):
+        x, y, z = data.shape
+        mod = int(z/10)
+
+        print("Calculating PCA")
+        pc = principal_components(data)
+        pc_reduced = pc.reduce(fraction=0.999)
+
+        img_pc = pc_reduced.transform(data)
+
+        print("Calculating Kmeans")
+        pca = np.zeros(shape=(x, y, mod))
+        for i in range(x):
+            for j in range(y):
+                for l in range(mod):
+                    pca[i, j, l] = img_pc[i, j, l]
+
+        self.kmeans(pca, x, y, mod)
+
+    def pca_then_kmean1(self, data, k):
         x, y, z = data.shape
 
         print("Calculating PCA")
-        vectors = data.reshape(x*y, z, order="F")
-        vectors = np.transpose(vectors)  # matrix of features
-        samples = np.shape(vectors)[1]  # basically rows * columns = 7138
+        vectors = data.reshape(x * y, z)
+        # vectors = np.transpose(vectors)  # matrix of features
+        samples = np.shape(vectors)[1]  # basically rows * columns
 
-        mu = np.mean(vectors, axis=1)  # mean
-        for n in range(samples):
-            vectors[range(z), n] = vectors[(range(z), n)] - mu  # filling with values
+        # my own implementation
+        # mu = np.mean(vectors, axis=1)  # mean
+        # for n in range(samples):
+        #     vectors[range(z), n] = vectors[(range(z), n)] - mu  # filling with values
 
-        c = np.cov(vectors)  # cov matrix of features
-        d, v = np.linalg.eig(c)  # eigenvalues of cov matrix of features
-        vec_pca = np.dot(v.T, vectors)  # projecting data into eigenvector
+        # c = np.cov(vectors)  # cov matrix of features
+        # d, v = np.linalg.eig(c)  # eigenvalues of cov matrix of features
+        # vec_pca = np.dot(v.T, vectors)  # projecting data into eigenvector
+
+        # sklearn pca
+        pca1 = decomposition.PCA(n_components=17)
+        vec_pca1 = pca1.fit_transform(vectors)
+
+        # pca = vec_pca1[:, 0]
+        # pca_im = np.reshape(pca, (x, y), order='F')
+        # plt.figure(figsize=(7, 7))
+        # plt.imshow(np.abs(pca_im))
+        # plt.show()
+
+        # pca2 = decomposition.PCA(n_components=int(z/10))
+        # vec_pca2 = pca2.fit_transform(vectors)
+
+        # fig = plt.figure(13)
+        # ax = fig.add_subplot(111, projection='3d')
+        # ax.scatter(vec_pca1[range(samples), 0], vec_pca1[range(samples), 1], vec_pca1[range(samples), 2], marker='o')
+        # plt.show()
 
         # Displaying an cov matrix with values after PCA
         # cov_pca = np.cov(vec_pca)
@@ -50,7 +93,7 @@ class Utilities:
         # ax.scatter(vec_pca[0, range(samples)], vec_pca[1, range(samples)], vec_pca[2, range(samples)], marker='o')
         # plt.show()
 
-        # for coord in range(1):
+        # for coord in range(3):
         #     pca = vec_pca[coord, :]
         #     pca_im = np.reshape(pca, (x, y), order='F')
         #     plt.figure(14 + coord)
@@ -59,69 +102,38 @@ class Utilities:
         #     plt.show()
 
         print("Calculating Kmeans")
+        self.kmeans1(vec_pca1, x, y, z, k)
 
-        # amount of components: 3 and 20
-        # arr1 = self.array_of_components(vec_pca, 6, samples)
-        # arr2 = self.array_of_components(vec_pca, 20, samples)
-
-        self.kmeans(self.array_of_components(vec_pca, 6, samples), x, y, 6)
-        self.kmeans(self.array_of_components(vec_pca, 20, samples), x, y, 6)
-
-        # arr1 = arr1.T
-        # clf = cluster.KMeans(n_clusters=6)
-        # labels = clf.fit_predict(arr1)
-        # plt.figure(figsize=(12, 12))
-        # plt.imshow(labels.reshape((83, 86)), cmap='gray')
-        # plt.show()
-        #
-        # arr2 = arr2.T
-        # clf = cluster.KMeans(n_clusters=6)
-        # labels = clf.fit_predict(arr2)
-        # plt.figure(figsize=(12, 12))
-        # plt.imshow(labels.reshape((83, 86)), cmap='gray')
-        # plt.show()
-
-        # kmeans2 = np.zeros(shape=(20, samples))
-
-    def array_of_components(self, data, n_components, second_dim):
-        arr = np.zeros(shape=(n_components, second_dim))
-
-        for i in range(n_components):
-            for j in range(second_dim):
-                arr[i][j] = data[i][j]
-        return arr
-
-    def kmeans(self, data, x, y, n_classes):
-        clf = cluster.KMeans(n_clusters=n_classes)
-        labels = clf.fit_predict(data.T)
-        plt.figure(figsize=(12, 12))
-        plt.imshow(labels.reshape((x, y)), cmap='gray')
+    def kmeans1(self, data, x, y, z, n_classes):
+        clf = cluster.KMeans(n_classes)
+        img = clf.fit(data)
+        plt.figure(figsize=(7, 7))
+        plt.imshow(img.labels_.reshape((x, y)))
         plt.show()
 
-    # def kmeans_for_each_pixel(self, data, n_classes):
-    #     x, y = data.shape
-    #     clustered = np.zeros((n_classes, y))
-    #     for i in range(y):
-    #         clustered[range(x), i] = cluster.KMeans(n_clusters=n_classes).fit(data[range(x), i].reshape(-1, 1)).labels_
-    #         # kmean = cluster.KMeans(n_clusters=n_classes).fit(data[i][j].reshape(-1, 1))
-    #     return clustered
+    def kmeans(self, data, x, y, k):
+        (c, v) = kmeans(data, 7, 300)
+        plt.imshow(c)
+        plt.show()
 
     def mat_to_array(self):
-        data_mat = loadmat('sets/SalinasA_corrected.mat')
-        data_a = loadmat('sets/SalinasA.mat')
-        gt_mat = loadmat('sets/SalinasA_gt.mat')
+        self.data_salinas_a_gt = self.data_salinas_a_gt['salinasA_gt'].astype(np.float32)
 
-        data = data_mat['salinasA_corrected'].astype(np.float32)
-        data_a = data_a['salinasA'].astype(np.float32)
-        gt = gt_mat['salinasA_gt'].astype(np.float32)
+        self.data_pavia_u = self.data_pavia_u['paviaU'].astype(np.float32)
+        self.data_kennedy = self.data_kennedy['KSC'].astype(np.float32)
+        self.data_salinas_a_corrected = self.data_salinas_a_corrected['salinasA_corrected'].astype(np.float32)
+        self.data_salinas_a = self.data_salinas_a['salinasA'].astype(np.float32)
+        self.data_pines = self.data_pines['indian_pines'].astype(np.float32)
+        self.data_pines_corrected = self.data_pines_corrected['indian_pines_corrected'].astype(np.float32)
 
+        self.data_pavia_u = self.processing_values(self.data_pavia_u)
+        self.data_kennedy = self.processing_values(self.data_kennedy)
+        self.data_salinas_a_corrected = self.processing_values(self.data_salinas_a_corrected)
+        self.data_salinas_a = self.processing_values(self.data_salinas_a)
+        self.data_pines = self.processing_values(self.data_pines)
+        self.data_pines_corrected = self.processing_values(self.data_pines_corrected)
+
+    def processing_values(self, data):
         for i in range(data.shape[-1]):
-            data[:, :, i] = (data[:, :, i] - np.mean(data[:, :, i])) / np.std(data[:, :, i])  # Standard score of the x
-
-        # for i in range(data_a.shape[-1]):
-        #     data_a[:, :, i] = (data_a[:, :, i] - np.mean(data_a[:, :, i])) / np.std(data_a[:, :, i])
-
-        # for i in range(data.shape[-1]):
-        #     data[:, :, i] = StandardScaler().fit_transform(data[:, :, i])
-
-        return data, gt, data_a
+            data[:, :, i] = (data[:, :, i] - np.mean(data[:, :, i])) / np.std(data[:, :, i])
+        return data
